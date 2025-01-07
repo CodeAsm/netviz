@@ -2,6 +2,9 @@
 
 This project is an early-stage mockup of a network visualization tool. The goal is to create an interactive interface for visualizing and managing network nodes and their connections.
 
+
+![netviz Screenshot](https://raw.githubusercontent.com/codeasm/netviz/main/resources/screenshot_01.png)
+
 ## Features
 
 - **Interactive Nodes**: Nodes can be added, moved, and deleted.
