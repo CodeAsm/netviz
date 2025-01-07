@@ -5,23 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Network Visualizer</title>
     <style>
+        :root {
+            --bg-color: #f9f9f9;
+            --node-bg-color: #007bff;
+            --node-text-color: white;
+            --line-color: black;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1e1e1e;
+            --node-bg-color: #4caf50;
+            --node-text-color: white;
+            --line-color: white;
+        }
+
         body {
             margin: 0;
             font-family: Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--node-text-color);
         }
         #network-container {
             position: relative;
             width: 100vw;
             height: 100vh;
-            background-color: #f9f9f9;
+            background-color: var(--bg-color);
             border: 1px solid #ccc;
         }
         .node {
             position: absolute;
             width: 120px;
             padding: 10px;
-            background-color: #007bff;
-            color: white;
+            background-color: var(--node-bg-color);
+            color: var(--node-text-color);
             text-align: center;
             border-radius: 8px;
             cursor: grab;
@@ -44,12 +60,25 @@
             height: 100%;
         }
         line {
-            stroke: black;
+            stroke: var(--line-color);
             stroke-width: 2;
+        }
+        #theme-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 8px 16px;
+            background-color: var(--node-bg-color);
+            color: var(--node-text-color);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 10;
         }
     </style>
 </head>
-<body>
+<body data-theme="dark">
+    <button id="theme-toggle">Toggle Theme</button>
     <div id="network-container">
         <svg id="connection-lines"></svg>
         <!-- Example Nodes -->
@@ -61,6 +90,7 @@
     <script>
         const container = document.getElementById('network-container');
         const svg = document.getElementById('connection-lines');
+        const themeToggle = document.getElementById('theme-toggle');
 
         let selectedNode = null; // For moving nodes
         let connectionCandidate = null; // For managing connections
@@ -147,6 +177,11 @@
                 }
             });
         }
+
+        // Theme toggle functionality
+        themeToggle.addEventListener('click', () => {
+            document.body.dataset.theme = document.body.dataset.theme === 'dark' ? '' : 'dark';
+        });
     </script>
 </body>
 </html>
