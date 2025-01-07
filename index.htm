@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Visualizer</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        #network-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+        }
+        .node {
+            position: absolute;
+            width: 120px;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+            border-radius: 8px;
+            cursor: grab;
+            user-select: none;
+        }
+        .dropdown {
+            margin-top: 10px;
+            background-color: white;
+            color: black;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 4px;
+            cursor: pointer;
+        }
+        svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        line {
+            stroke: black;
+            stroke-width: 2;
+        }
+    </style>
+</head>
+<body>
+    <div id="network-container">
+        <svg id="connection-lines"></svg>
+        <!-- Example Nodes -->
+        <div class="node" id="router" style="top: 50px; left: 50px;" data-type="router">Router</div>
+        <div class="node" id="pc1" style="top: 200px; left: 200px;" data-type="pc">PC 1</div>
+        <div class="node" id="server" style="top: 350px; left: 100px;" data-type="server">Server</div>
+    </div>
+
+    <script>
+        const container = document.getElementById('network-container');
+        const svg = document.getElementById('connection-lines');
+
+        let selectedNode = null;
+        let connections = [];
+
+        // Enable dragging for nodes
+        container.addEventListener('mousedown', (e) => {
+            if (e.target.classList.contains('node')) {
+                selectedNode = e.target;
+                selectedNode.style.cursor = 'grabbing';
+            }
+        });
+
+        container.addEventListener('mousemove', (e) => {
+            if (selectedNode) {
+                const rect = container.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                selectedNode.style.left = `${x - selectedNode.offsetWidth / 2}px`;
+                selectedNode.style.top = `${y - selectedNode.offsetHeight / 2}px`;
+                updateConnections();
+            }
+        });
+
+        container.addEventListener('mouseup', () => {
+            if (selectedNode) {
+                selectedNode.style.cursor = 'grab';
+                selectedNode = null;
+            }
+        });
+
+        // Connect nodes on double-click
+        container.addEventListener('dblclick', (e) => {
+            if (e.target.classList.contains('node')) {
+                if (!selectedNode) {
+                    selectedNode = e.target;
+                    selectedNode.style.border = '2px solid #00ff00'; // Highlight the first node
+                } else {
+                    const startNode = selectedNode;
+                    const endNode = e.target;
+
+                    if (startNode !== endNode) {
+                        createConnection(startNode, endNode); // Create the connection
+                    }
+
+                    // Reset selection
+                    startNode.style.border = 'none';
+                    selectedNode = null;
+                }
+            }
+         });
+
+
+        // Create a connection line
+        function createConnection(startNode, endNode) {
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('data-start', startNode.id);
+            line.setAttribute('data-end', endNode.id);
+            svg.appendChild(line);
+            connections.push({ start: startNode.id, end: endNode.id });
+            updateConnections();
+        }
+
+        // Update connection lines based on node positions
+        function updateConnections() {
+            connections.forEach(conn => {
+                const startNode = document.getElementById(conn.start);
+                const endNode = document.getElementById(conn.end);
+
+                const startRect = startNode.getBoundingClientRect();
+                const endRect = endNode.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+
+                const x1 = startRect.left + startRect.width / 2 - containerRect.left;
+                const y1 = startRect.top + startRect.height / 2 - containerRect.top;
+                const x2 = endRect.left + endRect.width / 2 - containerRect.left;
+                const y2 = endRect.top + endRect.height / 2 - containerRect.top;
+
+                const line = svg.querySelector(`line[data-start="${conn.start}"][data-end="${conn.end}"]`);
+                if (line) {
+                    line.setAttribute('x1', x1);
+                    line.setAttribute('y1', y1);
+                    line.setAttribute('x2', x2);
+                    line.setAttribute('y2', y2);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
