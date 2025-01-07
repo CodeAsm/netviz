@@ -8,6 +8,8 @@
         :root {
             --bg-color: #f9f9f9;
             --node-bg-color: #007bff;
+            --toolbar-bg-color: #292483;
+            --toolbar-txt-color: black;
             --node-text-color: white;
             --line-color: black;
         }
@@ -15,6 +17,8 @@
         [data-theme="dark"] {
             --bg-color: #1e1e1e;
             --node-bg-color: #4caf50;
+            --toolbar-bg-color: #9895da;
+            --toolbar-txt-color: white;
             --node-text-color: white;
             --line-color: white;
         }
@@ -28,7 +32,7 @@
         #network-container {
             position: relative;
             width: 100vw;
-            height: 100vh;
+            height: calc(100vh - 50px);
             background-color: var(--bg-color);
             border: 1px solid #ccc;
         }
@@ -63,22 +67,49 @@
             stroke: var(--line-color);
             stroke-width: 2;
         }
-        #theme-toggle {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            padding: 8px 16px;
-            background-color: var(--node-bg-color);
+        #toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            background-color: var(--toolbar-bg-color);
             color: var(--node-text-color);
+        }
+        #toolbar button {
+            padding: 8px 16px;
+            background-color: var(--bg-color);
+            color: var(--toolbar-txt-color);
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            margin-right: 10px;
+        }
+        #toolbar button:last-child {
+            margin-right: 0;
+        }
+        #connections-display {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--bg-color);
+            color: var(--toolbar-txt-color);
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 8px;
             z-index: 10;
         }
     </style>
 </head>
 <body data-theme="dark">
-    <button id="theme-toggle">Toggle Theme</button>
+    <div id="toolbar">
+        <button id="new-node">New Node</button>
+        <button id="show-connections">Show Connections</button>
+        <button id="delete-node">Delete Node</button>
+        <button id="delete-connection">Delete Connection</button>
+        <button id="theme-toggle">Toggle Theme</button>
+    </div>
     <div id="network-container">
         <svg id="connection-lines"></svg>
         <!-- Example Nodes -->
@@ -86,14 +117,27 @@
         <div class="node" id="pc1" style="top: 200px; left: 200px;" data-type="pc">PC 1</div>
         <div class="node" id="server" style="top: 350px; left: 100px;" data-type="server">Server</div>
     </div>
+    <div id="connections-display">
+        <h3>Connections</h3>
+        <ul id="connections-list"></ul>
+        <button id="close-connections">Close</button>
+    </div>
 
     <script>
         const container = document.getElementById('network-container');
         const svg = document.getElementById('connection-lines');
         const themeToggle = document.getElementById('theme-toggle');
+        const newNodeButton = document.getElementById('new-node');
+        const showConnectionsButton = document.getElementById('show-connections');
+        const deleteNodeButton = document.getElementById('delete-node');
+        const deleteConnectionButton = document.getElementById('delete-connection');
+        const connectionsDisplay = document.getElementById('connections-display');
+        const connectionsList = document.getElementById('connections-list');
+        const closeConnectionsButton = document.getElementById('close-connections');
 
         let selectedNode = null; // For moving nodes
         let connectionCandidate = null; // For managing connections
+        let deleteMode = false;
         let connections = [];
 
         // Enable dragging for nodes
@@ -124,6 +168,15 @@
 
         // Connect nodes on double-click
         container.addEventListener('dblclick', (e) => {
+            if (deleteMode && e.target.classList.contains('node')) {
+                // Delete Node Mode
+                container.removeChild(e.target);
+                connections = connections.filter(conn => conn.start !== e.target.id && conn.end !== e.target.id);
+                updateConnections();
+                deleteMode = false;
+                return;
+            }
+
             if (e.target.classList.contains('node')) {
                 if (!connectionCandidate) {
                     connectionCandidate = e.target;
@@ -181,6 +234,63 @@
         // Theme toggle functionality
         themeToggle.addEventListener('click', () => {
             document.body.dataset.theme = document.body.dataset.theme === 'dark' ? '' : 'dark';
+        });
+
+        // Add new node functionality
+        newNodeButton.addEventListener('click', () => {
+            const newNode = document.createElement('div');
+            newNode.className = 'node';
+            newNode.textContent = `Node ${document.querySelectorAll('.node').length + 1}`;
+            newNode.style.top = '100px';
+            newNode.style.left = '100px';
+            container.appendChild(newNode);
+        });
+
+        // Show connections functionality
+        showConnectionsButton.addEventListener('click', () => {
+            connectionsList.innerHTML = '';
+            connections.forEach(conn => {
+                const li = document.createElement('li');
+                li.textContent = `${conn.start} ↔ ${conn.end}`;
+                connectionsList.appendChild(li);
+            });
+            connectionsDisplay.style.display = 'block';
+        });
+
+        // Close connections display
+        closeConnectionsButton.addEventListener('click', () => {
+            connectionsDisplay.style.display = 'none';
+        });
+
+        // Delete node functionality
+        deleteNodeButton.addEventListener('click', () => {
+            deleteMode = true;
+        });
+
+        // Delete connection functionality
+        deleteConnectionButton.addEventListener('click', () => {
+            const nodeIds = Array.from(new Set(connections.flatMap(conn => [conn.start, conn.end])));
+            const select = document.createElement('select');
+            select.id = 'delete-connection-select';
+            nodeIds.forEach(id => {
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = id;
+                select.appendChild(option);
+            });
+            const confirmButton = document.createElement('button');
+            confirmButton.textContent = 'Delete Connection';
+
+            confirmButton.addEventListener('click', () => {
+                const selectedNodeId = select.value;
+                connections = connections.filter(conn => conn.start !== selectedNodeId && conn.end !== selectedNodeId);
+                updateConnections();
+                container.removeChild(select);
+                container.removeChild(confirmButton);
+            });
+
+            container.appendChild(select);
+            container.appendChild(confirmButton);
         });
     </script>
 </body>
