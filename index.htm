@@ -62,7 +62,8 @@
         const container = document.getElementById('network-container');
         const svg = document.getElementById('connection-lines');
 
-        let selectedNode = null;
+        let selectedNode = null; // For moving nodes
+        let connectionCandidate = null; // For managing connections
         let connections = [];
 
         // Enable dragging for nodes
@@ -94,11 +95,11 @@
         // Connect nodes on double-click
         container.addEventListener('dblclick', (e) => {
             if (e.target.classList.contains('node')) {
-                if (!selectedNode) {
-                    selectedNode = e.target;
-                    selectedNode.style.border = '2px solid #00ff00'; // Highlight the first node
+                if (!connectionCandidate) {
+                    connectionCandidate = e.target;
+                    connectionCandidate.style.border = '2px solid #00ff00'; // Highlight the first node
                 } else {
-                    const startNode = selectedNode;
+                    const startNode = connectionCandidate;
                     const endNode = e.target;
 
                     if (startNode !== endNode) {
@@ -107,11 +108,10 @@
 
                     // Reset selection
                     startNode.style.border = 'none';
-                    selectedNode = null;
+                    connectionCandidate = null;
                 }
             }
-         });
-
+        });
 
         // Create a connection line
         function createConnection(startNode, endNode) {
